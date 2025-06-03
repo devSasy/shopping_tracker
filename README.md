@@ -1,3 +1,7 @@
+Questa repository contiene il progetto sviluppato come parte di una Python Challenge didattica, con l'obiettivo di acquisire competenze pratiche nell’uso di Flask come framework backend e l’integrazione con un DBMS relazionale (MySQL/MariaDB).
+La traccia della consegna prevedeva la progettazione e implementazione di una Web Application per il tracciamento delle spese personali. 
+L’obiettivo era quello di raggiungere un prototipo funzionante entro la giornata, corredato da un README tecnico che spiegasse il setup del progetto e una presentazione PowerPoint per la successiva esposizione.
+
 # ShoppingTracker - Gestore Spese Personali con Flask
 
 Un'applicazione web per monitorare le spese personali, dotata di autenticazione utente, filtri avanzati e funzionalità di esportazione in CSV.
