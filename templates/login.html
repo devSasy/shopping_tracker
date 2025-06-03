@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if register %}Registrazione{% else %}Login{% endif %} - ShoppingTracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    {% if register %}
+                        <i class="fas fa-user-plus me-2"></i>Registrazione
+                    {% else %}
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    {% if register %}
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Conferma Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                    {% endif %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if register %}Registrati{% else %}Accedi{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                {% if register %}
+                    Hai già un account? <a href="{{ url_for('auth.login') }}">Accedi</a>
+                {% else %}
+                    Non hai un account? <a href="{{ url_for('auth.register') }}">Registrati</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

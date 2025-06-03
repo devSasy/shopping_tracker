@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ShoppingTracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Aggiungi Spesa
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('spese.add_spesa') }}" method="post">
+                    <div class="mb-3">
+                        <label for="data" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="data" name="data" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label">Categoria</label>
+                        <input type="text" class="form-control" id="categoria" name="categoria" list="categorie-list" required>
+                        <datalist id="categorie-list">
+                            {% for categoria in categorie %}
+                                <option value="{{ categoria }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descrizione" class="form-label">Descrizione</label>
+                        <input type="text" class="form-control" id="descrizione" name="descrizione" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="importo" class="form-label">Importo (€)</label>
+                        <input type="number" class="form-control" id="importo" name="importo" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salva Spesa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Le Tue Spese
+                </h5>
+                <a href="{{ url_for('spese.filter_spese') }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-filter me-1"></i>Filtra
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Categoria</th>
+                                <th>Descrizione</th>
+                                <th class="text-end">Importo</th>
+                                <th class="text-center">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for spesa in spese %}
+                                <tr>
+                                    <td>{{ spesa.data.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ spesa.categoria }}</td>
+                                    <td>{{ spesa.descrizione }}</td>
+                                    <td class="text-end">{{ spesa.importo|currency }}</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('spese.edit_spesa', id=spesa.id) }}" class="btn btn-sm btn-outline-primary me-1" aria-label="Modifica">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                onclick="confirmDelete({{ spesa.id }}, '{{ spesa.descrizione }}')" aria-label="Elimina">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">
+                                        <i class="fas fa-info-circle me-2"></i>Nessuna spesa registrata
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if spese %}
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Totale:</td>
+                                    <td class="text-end fw-bold">{{ totale|currency }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Conferma Eliminazione
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sei sicuro di voler eliminare la spesa "<span id="deleteItemName"></span>"?</p>
+                <p class="text-danger">Questa azione non può essere annullata.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <form id="deleteForm" method="post">
+                    <button type="submit" class="btn btn-danger">Elimina</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set today's date as default for the date input
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('data').value = today;
+    });
+    
+    // Function to show delete confirmation modal
+    function confirmDelete(id, descrizione) {
+        document.getElementById('deleteItemName').textContent = descrizione;
+        document.getElementById('deleteForm').action = "{{ url_for('spese.delete_spesa', id=0) }}".replace('0', id);
+        
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

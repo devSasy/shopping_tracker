@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Report - ShoppingTracker{% endblock %}
+
+{% block content %}
+<div class="card mb-4 shadow">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-filter me-2"></i>Filtra Spese
+        </h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('spese.filter_spese') }}" method="get" class="row g-3">
+            <div class="col-md-5">
+                <label for="categoria" class="form-label">Categoria</label>
+                <select class="form-select" id="categoria" name="categoria" aria-label="Seleziona categoria">
+                    <option value="">Tutte le categorie</option>
+                    {% for categoria in categorie %}
+                        <option value="{{ categoria }}" {% if selected_categoria == categoria %}selected{% endif %}>
+                            {{ categoria }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="mese" class="form-label">Mese</label>
+                <select class="form-select" id="mese" name="mese" aria-label="Seleziona mese">
+                    <option value="">Tutti i mesi</option>
+                    {% for mese in mesi %}
+                        <option value="{{ mese }}" {% if selected_mese == mese %}selected{% endif %}>
+                            {{ mese }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="d-grid w-100">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Filtra
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-table me-2"></i>Risultati
+        </h5>
+        {% if spese %}
+            <a href="{{ url_for('spese.export_spese', categoria=selected_categoria, mese=selected_mese) }}" 
+               class="btn btn-sm btn-light" aria-label="Esporta CSV">
+                <i class="fas fa-download me-1"></i>Esporta CSV
+            </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Categoria</th>
+                        <th>Descrizione</th>
+                        <th class="text-end">Importo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for spesa in spese %}
+                        <tr>
+                            <td>{{ spesa.data.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ spesa.categoria }}</td>
+                            <td>{{ spesa.descrizione }}</td>
+                            <td class="text-end">{{ spesa.importo|currency }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3">
+                                <i class="fas fa-info-circle me-2"></i>Nessuna spesa trovata con i filtri selezionati
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% if spese %}
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">Totale:</td>
+                            <td class="text-end fw-bold">{{ totale|currency }}</td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if spese %}
+<div class="card mt-4 shadow">
+    <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-chart-bar me-2"></i>Riepilogo Grafico
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-info persistent-alert" role="alert">
+                    <h4 class="alert-heading">Totale spese: {{ totale|currency }}</h4>
+                    <p class="mb-0">
+                        {% if selected_categoria %}Per la categoria: <strong>{{ selected_categoria }}</strong>{% endif %}
+                        {% if selected_mese %}nel mese: <strong>{{ selected_mese }}</strong>{% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <canvas id="spesaChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('spesaChart');
+        if (ctx) {
+            // Raggruppa le spese per categoria
+            var categorie = {};
+            {% for spesa in spese %}
+                var categoria = '{{ spesa.categoria }}';
+                if (!categorie[categoria]) {
+                    categorie[categoria] = 0;
+                }
+                categorie[categoria] += {{ spesa.importo }};
+            {% endfor %}
+            
+            // Converti in array per Chart.js
+            var labels = Object.keys(categorie);
+            var data = Object.values(categorie);
+            
+            // Genera colori casuali per le categorie
+            var backgroundColors = labels.map(function() {
+                var r = Math.floor(Math.random() * 200) + 55;
+                var g = Math.floor(Math.random() * 200) + 55;
+                var b = Math.floor(Math.random() * 200) + 55;
+                return 'rgba(' + r + ',' + g + ',' + b + ', 0.5)';
+            });
+            
+            var borderColors = backgroundColors.map(function(color) {
+                return color.replace('0.5', '1');
+            });
+            
+            var spesaData = {
+                labels: labels,
+                datasets: [{
+                    label: 'Importo per Categoria (€)',
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }]
+            };
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: spesaData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Spese per Categoria'
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var value = context.raw;
+                                    return value.toFixed(2) + ' €';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' €';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
